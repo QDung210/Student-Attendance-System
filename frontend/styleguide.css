@@ -1,0 +1,74 @@
+:root {
+  --heading-font-family: "Poppins", Helvetica;
+  --heading-font-weight: 600;
+  --heading-font-size: 28px;
+  --heading-letter-spacing: 0px;
+  --heading-line-height: 100%;
+  --heading-font-style: normal;
+  --body-large-regular-font-family: "Poppins", Helvetica;
+  --body-large-regular-font-weight: 400;
+  --body-large-regular-font-size: 16px;
+  --body-large-regular-letter-spacing: 0px;
+  --body-large-regular-line-height: 100%;
+  --body-large-regular-font-style: normal;
+  --body-medium-regular-font-family: "Poppins", Helvetica;
+  --body-medium-regular-font-weight: 400;
+  --body-medium-regular-font-size: 14px;
+  --body-medium-regular-letter-spacing: 0px;
+  --body-medium-regular-line-height: 100%;
+  --body-medium-regular-font-style: normal;
+  --body-large-semibold-font-family: "Poppins", Helvetica;
+  --body-large-semibold-font-weight: 600;
+  --body-large-semibold-font-size: 16px;
+  --body-large-semibold-letter-spacing: 0px;
+  --body-large-semibold-line-height: 100%;
+  --body-large-semibold-font-style: normal;
+  --color-foreground-high: var(--primitives-colors-gray-light-mode-900);
+  --color-foreground-default: var(--primitives-colors-gray-light-mode-700);
+  --color-foreground-low: var(--primitives-colors-gray-light-mode-400);
+  --color-foreground-oncolor: var(--primitives-colors-gray-light-mode-25);
+  --color-foreground-primary: var(--primitives-colors-blue-600);
+  --color-outline-primary: var(--primitives-colors-blue-100);
+  --color-outline-default: var(--primitives-colors-gray-light-mode-300);
+  --color-container-primary: var(--primitives-colors-blue-600);
+  --primitives-colors-gray-light-mode-900: rgba(16, 24, 40, 1);
+  --primitives-colors-gray-light-mode-700: rgba(52, 64, 84, 1);
+  --primitives-colors-gray-light-mode-400: rgba(152, 162, 179, 1);
+  --primitives-colors-gray-light-mode-25: rgba(252, 252, 253, 1);
+  --primitives-colors-blue-600: rgba(21, 112, 239, 1);
+  --primitives-colors-blue-100: rgba(209, 233, 255, 1);
+  --primitives-colors-gray-iron-300: rgba(209, 209, 214, 1);
+  --primitives-colors-gray-iron-500: rgba(112, 112, 123, 1);
+  --primitives-colors-gray-iron-400: rgba(160, 160, 171, 1);
+  --primitives-colors-gray-light-mode-300: rgba(208, 213, 221, 1);
+  --primitives-colors-gray-iron-50: rgba(250, 250, 250, 1);
+  --primitives-colors-gray-iron-25: rgba(252, 252, 252, 1);
+}
+
+/*
+
+To enable a theme in your HTML, simply add one of the following data attributes to an HTML element, like so:
+
+<body data-color-mode="light-mode">
+    <!-- the rest of your content -->
+</body>
+
+You can apply the theme on any DOM node, not just the `body`
+
+*/
+
+[data-color-mode="light-mode"] {
+  --color-foreground-high: var(--primitives-colors-gray-light-mode-900);
+  --color-foreground-default: var(--primitives-colors-gray-light-mode-700);
+  --color-foreground-low: var(--primitives-colors-gray-light-mode-400);
+  --color-foreground-oncolor: var(--primitives-colors-gray-light-mode-25);
+  --color-foreground-primary: var(--primitives-colors-blue-600);
+}
+
+[data-color-mode="dark-mode"] {
+  --color-foreground-high: var(--primitives-colors-gray-iron-50);
+  --color-foreground-default: var(--primitives-colors-gray-iron-300);
+  --color-foreground-low: var(--primitives-colors-gray-iron-500);
+  --color-foreground-oncolor: var(--primitives-colors-gray-iron-25);
+  --color-foreground-primary: var(--primitives-colors-gray-iron-400);
+}

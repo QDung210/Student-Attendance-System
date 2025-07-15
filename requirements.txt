@@ -1,0 +1,14 @@
+torch
+facenet-pytorch
+opencv-python
+qdrant-client
+numpy
+wget
+PyQt5
+pandas
+openpyxl
+pillow
+requests
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6

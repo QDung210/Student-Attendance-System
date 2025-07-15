@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test - Attendance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 3px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .attendance-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .avatar, .checkin-face {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid #ddd;
+        }
+        .student-details {
+            flex: 1;
+        }
+        .student-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        .student-id {
+            color: #666;
+            margin: 5px 0;
+        }
+        .attendance-time {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .buttons {
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .connect-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        .disconnect-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎓 Hệ thống điểm danh sinh viên - Real-time</h1>
+    
+    <div class="buttons">
+        <button class="connect-btn" onclick="connect()">🔗 Connect WebSocket</button>
+        <button class="disconnect-btn" onclick="disconnect()">❌ Disconnect</button>
+    </div>
+    
+    <div id="status" class="status disconnected">❌ Chưa kết nối</div>
+    
+    <div id="messages"></div>
+    <div id="attendanceList"></div>
+
+    <script>
+        let socket = null;
+        
+        function connect() {
+            socket = new WebSocket('ws://localhost:8000/ws/attendance');
+            
+            socket.onopen = function(event) {
+                updateStatus('🟢 Đã kết nối WebSocket', 'connected');
+                addMessage('✅ Kết nối WebSocket thành công');
+            };
+            
+            socket.onmessage = function(event) {
+                console.log('Received:', event.data);
+                
+                // Parse attendance data
+                try {
+                    const data = JSON.parse(event.data);
+                    displayAttendance(data);
+                    addMessage(`📝 Điểm danh mới: ${data.name} (${data.student_id})`);
+                } catch (e) {
+                    console.error('Error parsing message:', e);
+                    addMessage('❌ Lỗi parse dữ liệu: ' + event.data);
+                }
+            };
+            
+            socket.onclose = function(event) {
+                updateStatus('🔴 Đã ngắt kết nối', 'disconnected');
+                addMessage('❌ Ngắt kết nối WebSocket');
+            };
+            
+            socket.onerror = function(error) {
+                updateStatus('⚠️ Lỗi kết nối', 'disconnected');
+                addMessage('⚠️ Lỗi WebSocket: ' + error);
+            };
+        }
+        
+        function disconnect() {
+            if (socket) {
+                socket.close();
+            }
+        }
+        
+        function updateStatus(message, className) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + className;
+        }
+        
+        function addMessage(message) {
+            const div = document.createElement('div');
+            div.className = 'message';
+            div.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            document.getElementById('messages').appendChild(div);
+            
+            // Giữ chỉ 10 messages gần nhất
+            const messages = document.getElementById('messages');
+            while (messages.children.length > 10) {
+                messages.removeChild(messages.firstChild);
+            }
+        }
+        
+        function displayAttendance(data) {
+            const attendanceList = document.getElementById('attendanceList');
+            
+            // Tạo card cho sinh viên
+            const card = document.createElement('div');
+            card.className = 'attendance-card';
+            
+            card.innerHTML = `
+                <div class="student-info">
+                    <div>
+                        <h4>👤 Avatar gốc</h4>
+                        <img class="avatar" src="data:image/jpeg;base64,${data.avatar_base64}" 
+                             alt="Avatar ${data.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI1MCIgeT0iNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=='" />
+                    </div>
+                    <div>
+                        <h4>📷 Ảnh check-in</h4>
+                        <img class="checkin-face" src="data:image/jpeg;base64,${data.checkin_face_base64 || ''}" 
+                             alt="Check-in ${data.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI1MCIgeT0iNTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM5OTkiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg=='" />
+                    </div>
+                    <div class="student-details">
+                        <div class="student-name">${data.name}</div>
+                        <div class="student-id">MSSV: ${data.student_id}</div>
+                        <div>Lớp: ${data.class_name}</div>
+                        <div>Ngành: ${data.major}</div>
+                        <div class="attendance-time">⏰ Điểm danh: ${data.attendance_time}</div>
+                        <div style="color: #666; font-size: 12px;">🕒 Nhận: ${new Date(data.timestamp).toLocaleString()}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Thêm card mới lên đầu
+            attendanceList.insertBefore(card, attendanceList.firstChild);
+            
+            // Giữ chỉ 5 cards gần nhất
+            while (attendanceList.children.length > 5) {
+                attendanceList.removeChild(attendanceList.lastChild);
+            }
+        }
+    </script>
+</body>
+</html>
