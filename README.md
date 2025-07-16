@@ -1,8 +1,8 @@
-# Face Recognition Attendance System
+# 🧑‍🏫 Face Recognition Attendance System
 
 The system leverages `FaceNet` for accurate facial recognition, with a `FastAPI` backend and a lightweight web interface built using `HTML`, `CSS`, and `JavaScript`. It delivers a user-friendly solution for student attendance tracking.
 
-## Features
+## ✨ Features
 
 - **Real-time Face Recognition**: Automatic attendance tracking using advanced face recognition algorithms
 - **Web Dashboard**: Modern, responsive web interface for teachers and administrators
@@ -12,9 +12,9 @@ The system leverages `FaceNet` for accurate facial recognition, with a `FastAPI`
 - **Database Management**: `SQLite` database for student records and attendance data
 - **Vector Search**: `Qdrant vector database` for efficient face embedding storage and retrieval
 
-## Technology Stack
+## 🧰 Technology Stack
 
-### Backend
+### 🔙 Backend
 - **FastAPI**: Modern Python web framework for building APIs
 - **OpenCV**: Computer vision library for image processing
 - **FaceNet PyTorch**: Pre-trained face recognition model
@@ -22,14 +22,14 @@ The system leverages `FaceNet` for accurate facial recognition, with a `FastAPI`
 - **SQLite**: Database for student records and attendance
 - **PyQt5**: Desktop application framework
 
-### Frontend
+### 🔜 Frontend
 - **HTML5/CSS3**: Modern web standards
 - **JavaScript (ES6+)**: Interactive user interface
 - **Tailwind CSS**: Utility-first CSS framework
 - **WebSocket**: Real-time communication
 - **Font Awesome**: Icon library
 
-## Project Structure
+## 🗂️ Project Structure
 
 ```
 face/
@@ -66,7 +66,7 @@ face/
 └── README.md                # This file
 ```
 
-## Installation
+## 🚀 Installation
 
 ### Prerequisites
 - Python 3.8 or higher
@@ -97,7 +97,7 @@ cd src
 python database.py
 ```
 
-## Usage
+## ▶️ Usage
 
 ### Starting the System
 
@@ -142,7 +142,7 @@ python main.py
 4. **Automatic Logging**: System automatically recognizes and logs attendance
 5. **Real-time Updates**: Dashboard shows real-time attendance updates
 
-## API Endpoints
+## 🔗 API Endpoints
 
 ### Authentication
 - `POST /login` - Teacher login
@@ -162,11 +162,11 @@ python main.py
 - `GET /sample-excel` - Download sample Excel template
 
 
-## License
+## 📄 License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 **Note**: This system is designed for educational and small-scale institutional use. For production deployment, consider additional security measures, scalability improvements, and compliance with privacy regulations.
 
-## Demo
+## 📽️ Demo
 
 [![Watch the video](https://img.youtube.com/vi/QmktoFAOmxM/0.jpg)](https://www.youtube.com/watch?v=QmktoFAOmxM)
