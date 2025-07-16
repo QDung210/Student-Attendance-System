@@ -22,15 +22,15 @@ client = QdrantClient(host="localhost", port=6333)
 collection_name = "faces"
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
-# Biến toàn cục
+# Global variables
 current_recognition = {"student_id": None, "confidence": 0.0, "start_time": None}
 camera_frame = None
-last_update_time = 0  # Thời gian cập nhật cuối cùng
-last_recognition_per_student = {}  # Thời gian nhận diện cuối cùng cho mỗi sinh viên
-current_face_image = None  # Ảnh khuôn mặt hiện tại để lưu khi check-in
+last_update_time = 0  # Last update time
+last_recognition_per_student = {}  # Last recognition time for each student
+current_face_image = None  # Current face image to save when checking in
 
 def get_face_embedding(face_img):
-    """Tạo embedding từ ảnh khuôn mặt"""
+    """Generate embedding from face image"""
     face_img = cv2.resize(face_img, (160, 160))
     face_img = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
     face_img = face_img / 255.0
@@ -40,8 +40,8 @@ def get_face_embedding(face_img):
     return embedding / np.linalg.norm(embedding)
 
 def get_student_info(student_id):
-    """Lấy thông tin sinh viên từ database"""
-    # Không dùng cache để luôn lấy thông tin mới nhất
+    """Get student information from database"""
+    # Don't use cache to always get the latest information
     conn = sqlite3.connect("students.db")
     cursor = conn.cursor()
     cursor.execute("SELECT student_id, name, class, major, avatar, attendance_time, checkin_face FROM students WHERE student_id = ?", (student_id,))
@@ -51,7 +51,7 @@ def get_student_info(student_id):
     return result
 
 def is_already_attended(attendance_time):
-    """Kiểm tra xem sinh viên đã điểm danh trong 24h qua chưa"""
+    """Check if student has already attended in the past 24 hours"""
     if not attendance_time:
         return False
     
@@ -59,12 +59,12 @@ def is_already_attended(attendance_time):
         last_attendance = datetime.strptime(attendance_time, "%Y-%m-%d %H:%M:%S")
         current_time = datetime.now()
         time_diff = current_time - last_attendance
-        return time_diff.total_seconds() < 24 * 3600  # 24 giờ = 86400 giây
+        return time_diff.total_seconds() < 24 * 3600  # 24 hours = 86400 seconds
     except:
         return False
 
 def update_attendance_time(student_id):
-    """Cập nhật thời gian điểm danh cho sinh viên"""
+    """Update attendance time for student"""
     conn = sqlite3.connect("students.db")
     cursor = conn.cursor()
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -72,7 +72,7 @@ def update_attendance_time(student_id):
     conn.commit()
     conn.close()
     
-    # Gửi thông báo đến API backend
+    # Send notification to API backend
     try:
         response = requests.post(
             "http://localhost:8000/notify-attendance",
@@ -80,19 +80,19 @@ def update_attendance_time(student_id):
             timeout=5
         )
         if response.status_code == 200:
-            print(f"✅ Đã gửi thông báo điểm danh cho {student_id}")
+            print(f"✅ Sent attendance notification for {student_id}")
         else:
-            print(f"⚠️ Lỗi gửi thông báo: {response.status_code}")
+            print(f"⚠️ Notification error: {response.status_code}")
     except requests.exceptions.RequestException as e:
-        print(f"⚠️ Không thể kết nối API: {e}")
+        print(f"⚠️ Cannot connect to API: {e}")
 
 def update_attendance_with_face(student_id, face_image):
-    """Cập nhật thời gian điểm danh và lưu ảnh khuôn mặt"""
+    """Update attendance time and save face image"""
     conn = sqlite3.connect("students.db")
     cursor = conn.cursor()
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    # Chuyển đổi ảnh sang bytes
+    # Convert image to bytes
     _, buffer = cv2.imencode('.jpg', face_image)
     face_blob = buffer.tobytes()
     
@@ -101,7 +101,7 @@ def update_attendance_with_face(student_id, face_image):
     conn.commit()
     conn.close()
     
-    # Gửi thông báo đến API backend
+    # Send notification to API backend
     try:
         response = requests.post(
             "http://localhost:8000/notify-attendance",
@@ -109,14 +109,14 @@ def update_attendance_with_face(student_id, face_image):
             timeout=5
         )
         if response.status_code == 200:
-            print(f"✅ Đã gửi thông báo điểm danh cho {student_id}")
+            print(f"✅ Sent attendance notification for {student_id}")
         else:
-            print(f"⚠️ Lỗi gửi thông báo: {response.status_code}")
+            print(f"⚠️ Notification error: {response.status_code}")
     except requests.exceptions.RequestException as e:
-        print(f"⚠️ Không thể kết nối API: {e}")
+        print(f"⚠️ Cannot connect to API: {e}")
 
 def camera_worker():
-    """Worker thread cho camera"""
+    """Worker thread for camera"""
     global camera_frame, current_recognition
     
     cap = cv2.VideoCapture(0)
@@ -144,7 +144,7 @@ def camera_worker():
             camera_frame = frame
             continue
         
-        # Phát hiện khuôn mặt
+        # Detect faces
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
         
@@ -171,7 +171,7 @@ def camera_worker():
                     if confidence > max_confidence:
                         max_confidence = confidence
                         recognized_student = student_id
-                        best_face_image = face_img  # Lưu ảnh khuôn mặt tốt nhất
+                        best_face_image = face_img  # Save the best face image
                     
                     last_results[(x, y, w, h)] = (student_id, confidence)
                     cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
@@ -183,10 +183,10 @@ def camera_worker():
                     cv2.putText(frame, "Unknown", (x, y-10), 
                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
             except Exception as e:
-                print(f"Lỗi Qdrant: {e}")
+                print(f"Qdrant error: {e}")
                 last_results[(x, y, w, h)] = ("Error", 0.0)
         
-        # Cập nhật trạng thái nhận diện
+        # Update recognition status
         current_time = time.time()
         if recognized_student and max_confidence > 0.8:
             if (current_recognition["student_id"] != recognized_student or 
@@ -195,33 +195,32 @@ def camera_worker():
                 current_recognition["confidence"] = max_confidence
                 current_recognition["start_time"] = current_time
                 global current_face_image
-                current_face_image = best_face_image  # Lưu ảnh khuôn mặt để dùng khi check-in
+                current_face_image = best_face_image  # Save face image to use when checking in
         elif max_confidence <= 0.8:
             current_recognition = {"student_id": None, "confidence": 0.0, "start_time": None}
             current_face_image = None
         
         camera_frame = frame
-        time.sleep(0.1)  # Tăng delay để giảm tần suất nhận diện
 
 def main():
     app = QApplication(sys.argv)
     
-    # Tạo cửa sổ chính
+    # Create main window
     window = QMainWindow()
-    window.setWindowTitle("Hệ thống nhận diện khuôn mặt sinh viên")
+    window.setWindowTitle("Student Face Recognition System")
     window.setGeometry(100, 100, 1200, 800)
     
     central_widget = QWidget()
     window.setCentralWidget(central_widget)
     
-    # Layout chính
+    # Main layout
     main_layout = QHBoxLayout(central_widget)
     
-    # Panel camera (bên trái)
+    # Camera panel (left)
     camera_panel = QWidget()
     camera_layout = QVBoxLayout(camera_panel)
     
-    camera_title = QLabel("CAMERA NHẬN DIỆN")
+    camera_title = QLabel("FACE RECOGNITION CAMERA")
     camera_title.setAlignment(Qt.AlignCenter)
     camera_title.setFont(QFont("Arial", 16, QFont.Bold))
     camera_title.setStyleSheet("color: #333; padding: 10px; background-color: #e0e0e0;")
@@ -230,22 +229,22 @@ def main():
     camera_label.setMinimumSize(640, 480)
     camera_label.setAlignment(Qt.AlignCenter)
     camera_label.setStyleSheet("border: 2px solid #ddd; background-color: black;")
-    camera_label.setText("Đang khởi động camera...")
+    camera_label.setText("Starting camera...")
     
-    status_label = QLabel("Trạng thái: Sẵn sàng")
+    status_label = QLabel("Status: Ready")
     status_label.setStyleSheet("padding: 10px; background-color: #e8f5e8; border: 1px solid #4CAF50;")
     
     camera_layout.addWidget(camera_title)
     camera_layout.addWidget(camera_label)
     camera_layout.addWidget(status_label)
     
-    # Panel thông tin sinh viên (bên phải)
+    # Student information panel (right)
     info_panel = QWidget()
     info_panel.setFixedWidth(350)
     info_panel.setStyleSheet("background-color: #f5f5f5; border-left: 2px solid #ddd;")
     info_layout = QVBoxLayout(info_panel)
     
-    info_title = QLabel("THÔNG TIN SINH VIÊN")
+    info_title = QLabel("STUDENT INFORMATION")
     info_title.setAlignment(Qt.AlignCenter)
     info_title.setFont(QFont("Arial", 14, QFont.Bold))
     info_title.setStyleSheet("color: #333; padding: 10px; background-color: #e0e0e0;")
@@ -254,21 +253,21 @@ def main():
     avatar_label.setFixedSize(200, 200)
     avatar_label.setAlignment(Qt.AlignCenter)
     avatar_label.setStyleSheet("border: 2px solid #ddd; background-color: white;")
-    avatar_label.setText("Chưa có ảnh")
+    avatar_label.setText("No image")
     
-    student_id_label = QLabel("Mã SV: --")
+    student_id_label = QLabel("Student ID: --")
     student_id_label.setStyleSheet("padding: 8px; font-size: 14px; font-weight: bold;")
     
-    name_label = QLabel("Họ tên: --")
+    name_label = QLabel("Name: --")
     name_label.setStyleSheet("padding: 8px; font-size: 14px;")
     
-    class_label = QLabel("Lớp: --")
+    class_label = QLabel("Class: --")
     class_label.setStyleSheet("padding: 8px; font-size: 14px;")
     
-    major_label = QLabel("Ngành: --")
+    major_label = QLabel("Major: --")
     major_label.setStyleSheet("padding: 8px; font-size: 14px;")
     
-    attendance_label = QLabel("Điểm danh: --")
+    attendance_label = QLabel("Attendance: --")
     attendance_label.setStyleSheet("padding: 8px; font-size: 14px; color: #2196F3;")
     
     info_layout.addWidget(info_title)
@@ -283,15 +282,15 @@ def main():
     main_layout.addWidget(camera_panel)
     main_layout.addWidget(info_panel)
     
-    # Khởi động camera worker
+    # Start camera worker
     camera_thread = threading.Thread(target=camera_worker, daemon=True)
     camera_thread.start()
     
-    # Timer cập nhật giao diện
+    # UI update timer
     def update_ui():
         global camera_frame, current_recognition
         
-        # Cập nhật camera
+        # Update camera
         if camera_frame is not None:
             rgb_image = cv2.cvtColor(camera_frame, cv2.COLOR_BGR2RGB)
             h, w, ch = rgb_image.shape
@@ -302,7 +301,7 @@ def main():
             )
             camera_label.setPixmap(scaled_pixmap)
         
-        # Kiểm tra nhận diện > 0.8 trong 1 giây
+        # Check recognition > 0.8 for 1 second
         if (current_recognition["student_id"] and 
             current_recognition["confidence"] > 0.8 and 
             current_recognition["start_time"] and 
@@ -311,67 +310,67 @@ def main():
             student_id = current_recognition["student_id"]
             confidence = current_recognition["confidence"]
             
-            # Kiểm tra thời gian delay để tránh cập nhật liên tục  
+            # Check delay time to avoid continuous updates
             global last_update_time, last_recognition_per_student
             current_time = time.time()
             
-            # Kiểm tra thời gian delay chung
-            if current_time - last_update_time < 3:  # 3 giây delay
+            # Check general delay time
+            if current_time - last_update_time < 3:  # 3 seconds delay
                 return
             
-            # Kiểm tra thời gian delay riêng cho từng sinh viên
+            # Check individual delay time for each student
             if student_id in last_recognition_per_student:
-                if current_time - last_recognition_per_student[student_id] < 10:  # 10 giây delay cho mỗi sinh viên
+                if current_time - last_recognition_per_student[student_id] < 10:  # 10 seconds delay per student
                     return
             
             last_update_time = current_time
             last_recognition_per_student[student_id] = current_time
             
-            # Cập nhật thông tin sinh viên
+            # Update student information
             info = get_student_info(student_id)
             if info:
-                student_id_label.setText(f"Mã SV: {info[0]}")
-                name_label.setText(f"Họ tên: {info[1]}")
-                class_label.setText(f"Lớp: {info[2]}")
-                major_label.setText(f"Ngành: {info[3]}")
+                student_id_label.setText(f"Student ID: {info[0]}")
+                name_label.setText(f"Name: {info[1]}")
+                class_label.setText(f"Class: {info[2]}")
+                major_label.setText(f"Major: {info[3]}")
                 
-                # Hiển thị avatar
+                # Display avatar
                 if info[4]:  # avatar blob
                     pixmap = QPixmap()
                     pixmap.loadFromData(info[4])
                     scaled_avatar = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
                     avatar_label.setPixmap(scaled_avatar)
                 
-                # Kiểm tra đã điểm danh trong 24h chưa
+                # Check if already attended in 24h
                 attendance_time = info[5] if len(info) > 5 else None
                 if is_already_attended(attendance_time):
-                    # Đã điểm danh trong 24h - không cập nhật
+                    # Already attended in 24h - no update
                     last_time = datetime.strptime(attendance_time, "%Y-%m-%d %H:%M:%S").strftime("%H:%M:%S")
-                    attendance_label.setText(f"Đã điểm danh: {last_time}")
-                    status_label.setText(f"Đã điểm danh rồi: {info[1]} ({confidence:.2f})")
+                    attendance_label.setText(f"Already attended: {last_time}")
+                    status_label.setText(f"Already attended: {info[1]} ({confidence:.2f})")
                     status_label.setStyleSheet("padding: 10px; background-color: #fff3cd; border: 1px solid #ffc107;")
                 else:
-                    # Chưa điểm danh trong 24h - cập nhật mới với ảnh khuôn mặt
+                    # Not attended in 24h - update with face image
                     if current_face_image is not None:
                         update_attendance_with_face(student_id, current_face_image)
                     else:
                         update_attendance_time(student_id)
                     current_time = datetime.now().strftime("%H:%M:%S")
-                    attendance_label.setText(f"Điểm danh: {current_time}")
-                    status_label.setText(f"Nhận diện: {info[1]} ({confidence:.2f})")
+                    attendance_label.setText(f"Attendance: {current_time}")
+                    status_label.setText(f"Recognized: {info[1]} ({confidence:.2f})")
                     status_label.setStyleSheet("padding: 10px; background-color: #e3f2fd; border: 1px solid #2196F3;")
                 
-                # Reset để tránh cập nhật liên tục
+                # Reset to avoid continuous updates
                 current_recognition["start_time"] = None
                 current_recognition["student_id"] = None
                 current_recognition["confidence"] = 0.0
         
         elif not current_recognition["student_id"]:
-            # Reset thông tin khi không nhận diện
-            status_label.setText("Trạng thái: Sẵn sàng")
+            # Reset information when no recognition
+            status_label.setText("Status: Ready")
             status_label.setStyleSheet("padding: 10px; background-color: #e8f5e8; border: 1px solid #4CAF50;")
     
-    # Timer cập nhật UI mỗi 100ms
+    # Update UI timer every 100ms
     timer = QTimer()
     timer.timeout.connect(update_ui)
     timer.start(100)

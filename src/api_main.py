@@ -126,14 +126,14 @@ def blob_to_base64(blob_data) -> str:
 
 # Request/Response functions
 def create_login_response(success: bool, message: str, token: Optional[str] = None) -> Dict[str, Any]:
-    """Tạo response cho login"""
+    """Create response for login"""
     response = {"success": success, "message": message}
     if token:
         response["token"] = token
     return response
 
 def create_student_attendance(student_id: str, name: str, class_name: str, major: str, avatar_base64: str, attendance_time: str, checkin_face_base64: str = "") -> Dict[str, Any]:
-    """Tạo object StudentAttendance"""
+    """Create StudentAttendance object"""
     return {
         "student_id": student_id,
         "name": name,
@@ -145,7 +145,7 @@ def create_student_attendance(student_id: str, name: str, class_name: str, major
     }
 
 def create_today_checkins_response(success: bool, data: List[Dict[str, Any]], total: int) -> Dict[str, Any]:
-    """Tạo response cho today checkins"""
+    """Create response for today checkins"""
     return {
         "success": success,
         "data": data,
@@ -155,12 +155,12 @@ def create_today_checkins_response(success: bool, data: List[Dict[str, Any]], to
 # API Routes
 @app.post("/login")
 async def login(username: str = Form(...), password: str = Form(...)):
-    """API đăng nhập cho giáo viên"""
+    """Teacher login API"""
     conn = get_db()
     cursor = conn.cursor()
     
     try:
-        # Kiểm tra thông tin đăng nhập - có thể là username hoặc email
+        # Check login credentials - can be username or email
         cursor.execute(
             "SELECT username, password_hash, full_name FROM teacher WHERE username = ? OR username LIKE ?",
             (username, f"%{username}%")
@@ -168,32 +168,32 @@ async def login(username: str = Form(...), password: str = Form(...)):
         teacher = cursor.fetchone()
         
         if not teacher:
-            return create_login_response(False, "Tài khoản không tồn tại")
+            return create_login_response(False, "Account does not exist")
         
         if not verify_password(password, teacher["password_hash"]):
-            return create_login_response(False, "Sai mật khẩu")
+            return create_login_response(False, "Wrong password")
         
-        # Tạo token đơn giản (trong thực tế nên dùng JWT)
+        # Create simple token (should use JWT in production)
         token = base64.b64encode(f"{username}:{datetime.now().isoformat()}".encode()).decode()
         
-        return create_login_response(True, f"Đăng nhập thành công! Xin chào {teacher['full_name']}", token)
+        return create_login_response(True, f"Login successful! Welcome {teacher['full_name']}", token)
         
     except Exception as e:
-        return create_login_response(False, f"Lỗi: {str(e)}")
+        return create_login_response(False, f"Error: {str(e)}")
     finally:
         conn.close()
 
 @app.get("/today-checkins")
 async def get_today_checkins():
-    """API lấy danh sách sinh viên đã điểm danh hôm nay"""
+    """API to get list of students who checked in today"""
     conn = get_db()
     cursor = conn.cursor()
     
     try:
-        # Lấy ngày hôm nay
+        # Get today's date
         today = datetime.now().strftime("%Y-%m-%d")
         
-        # Truy vấn sinh viên đã điểm danh hôm nay
+        # Query students who checked in today
         cursor.execute("""
             SELECT student_id, name, class, major, avatar, attendance_time, checkin_face
             FROM students 
@@ -204,7 +204,7 @@ async def get_today_checkins():
         
         students = cursor.fetchall()
         
-        # Chuyển đổi dữ liệu
+        # Convert data
         attendance_list = []
         for student in students:
             attendance_list.append(create_student_attendance(
@@ -224,17 +224,17 @@ async def get_today_checkins():
         )
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
     finally:
         conn.close()
 
 @app.websocket("/ws/attendance")
 async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket endpoint để push thông tin điểm danh real-time"""
+    """WebSocket endpoint to push real-time attendance information"""
     await connect_websocket(websocket)
     try:
         while True:
-            # Giữ kết nối sống
+            # Keep connection alive
             await asyncio.sleep(1)
     except Exception as e:
         print(f"WebSocket error: {e}")
@@ -243,12 +243,12 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.post("/notify-attendance")
 async def notify_attendance(student_id: str, attendance_time: str):
-    """API để hệ thống nhận diện gửi thông tin điểm danh mới"""
+    """API for recognition system to send new attendance information"""
     conn = get_db()
     cursor = conn.cursor()
     
     try:
-        # Lấy thông tin sinh viên
+        # Get student information
         cursor.execute("""
             SELECT student_id, name, class, major, avatar, attendance_time, checkin_face
             FROM students 
@@ -258,9 +258,9 @@ async def notify_attendance(student_id: str, attendance_time: str):
         student = cursor.fetchone()
         
         if not student:
-            raise HTTPException(status_code=404, detail="Sinh viên không tồn tại")
+            raise HTTPException(status_code=404, detail="Student does not exist")
         
-        # Tạo thông tin để gửi qua WebSocket
+        # Create information to send via WebSocket
         attendance_data = {
             "student_id": student["student_id"],
             "name": student["name"],
@@ -272,13 +272,13 @@ async def notify_attendance(student_id: str, attendance_time: str):
             "timestamp": datetime.now().isoformat()
         }
         
-        # Gửi thông tin qua WebSocket
+        # Send information via WebSocket
         await broadcast_message(json.dumps(attendance_data))
         
-        return {"success": True, "message": "Đã gửi thông tin điểm danh"}
+        return {"success": True, "message": "Attendance information sent"}
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
     finally:
         conn.close()
 
@@ -288,7 +288,7 @@ async def upload_excel(file: UploadFile = File(...)):
     try:
         # Validate file type
         if not file.filename.endswith(('.xlsx', '.xls')):
-            raise HTTPException(status_code=400, detail="Chỉ chấp nhận file Excel (.xlsx, .xls)")
+            raise HTTPException(status_code=400, detail="Only Excel files (.xlsx, .xls) are accepted")
         
         # Save uploaded file
         excel_path = "students.xlsx"
@@ -302,22 +302,22 @@ async def upload_excel(file: UploadFile = File(...)):
             missing_columns = [col for col in required_columns if col not in df.columns]
             
             if missing_columns:
-                raise HTTPException(status_code=400, detail=f"File Excel thiếu các cột: {', '.join(missing_columns)}")
+                raise HTTPException(status_code=400, detail=f"Excel file missing columns: {', '.join(missing_columns)}")
             
             student_count = len(df)
             
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Không thể đọc file Excel: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"Unable to read Excel file: {str(e)}")
         
         return {
             "success": True, 
-            "message": "Upload file Excel thành công",
+            "message": "Excel file uploaded successfully",
             "student_count": student_count,
             "file_path": excel_path
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi upload file Excel: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error uploading Excel file: {str(e)}")
 
 # Upload images folder endpoint
 @app.post("/api/upload-images")
@@ -353,14 +353,14 @@ async def upload_images(files: List[UploadFile] = File(...)):
         
         return {
             "success": True,
-            "message": "Upload folder ảnh thành công",
+            "message": "Images folder uploaded successfully",
             "students_count": len(uploaded_students),
             "total_files": total_files,
             "uploaded_students": list(uploaded_students)
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi upload folder ảnh: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error uploading images folder: {str(e)}")
 
 # Process data endpoint
 @app.post("/api/process-data")
@@ -372,15 +372,15 @@ async def process_data():
         success = process_face_data()
         
         if not success:
-            raise HTTPException(status_code=500, detail="Xử lý dữ liệu thất bại")
+            raise HTTPException(status_code=500, detail="Data processing failed")
         
         return {
             "success": True,
-            "message": "Xử lý dữ liệu thành công"
+            "message": "Data processing successful"
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi xử lý dữ liệu: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing data: {str(e)}")
 
 # Update database endpoint
 @app.post("/api/update-database")
@@ -392,38 +392,38 @@ async def update_database():
         success = update_db()
         
         if not success:
-            raise HTTPException(status_code=500, detail="Cập nhật database thất bại")
+            raise HTTPException(status_code=500, detail="Database update failed")
         
         return {
             "success": True,
-            "message": "Cập nhật database thành công"
+            "message": "Database updated successfully"
         }
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi cập nhật database: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating database: {str(e)}")
 
 # Download sample Excel file
 @app.get("/sample-excel")
 async def download_sample_excel():
-    """Download file Excel mẫu"""
+    """Download sample Excel file"""
     sample_file = "students_sample.xlsx"
     if os.path.exists(sample_file):
         return FileResponse(sample_file, filename="students_sample.xlsx", media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     else:
-        raise HTTPException(status_code=404, detail="File mẫu không tồn tại")
+        raise HTTPException(status_code=404, detail="Sample file does not exist")
 
 if __name__ == "__main__":
     print("🚀 Starting Face Recognition Attendance API...")
     print("📋 Available endpoints:")
-    print("   - POST /login - Đăng nhập giáo viên")
-    print("   - GET /today-checkins - Danh sách điểm danh hôm nay")
+    print("   - POST /login - Teacher login")
+    print("   - GET /today-checkins - Today's attendance list")
     print("   - WS /ws/attendance - WebSocket real-time")
-    print("   - POST /notify-attendance - Thông báo điểm danh mới")
-    print("   - POST /api/upload-excel - Upload file Excel sinh viên")
-    print("   - POST /api/upload-images - Upload folder ảnh sinh viên")
-    print("   - POST /api/process-data - Xử lý dữ liệu từ file Excel và ảnh")
-    print("   - POST /api/update-database - Cập nhật database từ dữ liệu đã xử lý")
-    print("   - GET /sample-excel - Tải file Excel mẫu")
+    print("   - POST /notify-attendance - New attendance notification")
+    print("   - POST /api/upload-excel - Upload student Excel file")
+    print("   - POST /api/upload-images - Upload student images folder")
+    print("   - POST /api/process-data - Process data from Excel and images")
+    print("   - POST /api/update-database - Update database from processed data")
+    print("   - GET /sample-excel - Download sample Excel file")
     print("🌐 Server running on: http://localhost:8000")
     print("📖 API Docs: http://localhost:8000/docs")
     

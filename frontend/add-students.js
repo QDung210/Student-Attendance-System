@@ -53,7 +53,7 @@ function handleExcelDrop(e) {
             updateStepStatus(2, 'active');
             checkReadyToProcess();
         } else {
-            alert('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+            alert('Please select Excel file (.xlsx or .xls)');
         }
     }
 }
@@ -107,7 +107,7 @@ function showImagesInfo(files) {
     const totalFolders = folderMap.size;
     const totalFiles = files.length;
     
-    countSpan.textContent = `${totalFolders} thư mục, ${totalFiles} ảnh`;
+    countSpan.textContent = `${totalFolders} folders, ${totalFiles} images`;
     info.classList.remove('hidden');
     
     // Show progress
@@ -176,7 +176,7 @@ function addLogEntry(message, type = 'info') {
 
 async function processStudents() {
     if (!excelFile || imagesFiles.length === 0) {
-        alert('Vui lòng upload đầy đủ file Excel và folder ảnh');
+        alert('Please upload both Excel file and image folder');
         return;
     }
     
@@ -189,51 +189,51 @@ async function processStudents() {
     
     // Disable process button
     document.getElementById('process-btn').disabled = true;
-    document.getElementById('process-btn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Đang xử lý...';
+    document.getElementById('process-btn').innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
     
     try {
-        addLogEntry('Bắt đầu quá trình xử lý dữ liệu sinh viên', 'info');
+        addLogEntry('Starting student data processing', 'info');
         
         // Step 1: Upload Excel file
-        addLogEntry('Đang upload file Excel...', 'info');
+        addLogEntry('Uploading Excel file...', 'info');
         await uploadExcelFile();
-        addLogEntry('✓ Upload file Excel thành công', 'success');
+        addLogEntry('✓ Excel file uploaded successfully', 'success');
         
         // Step 2: Upload images
-        addLogEntry('Đang upload folder ảnh...', 'info');
+        addLogEntry('Uploading image folder...', 'info');
         await uploadImagesFolder();
-        addLogEntry('✓ Upload folder ảnh thành công', 'success');
+        addLogEntry('✓ Image folder uploaded successfully', 'success');
         
         // Step 3: Process data
-        addLogEntry('Đang xử lý dữ liệu và tạo embedding...', 'info');
+        addLogEntry('Processing data and creating embeddings...', 'info');
         await processData();
-        addLogEntry('✓ Xử lý dữ liệu thành công', 'success');
+        addLogEntry('✓ Data processing completed', 'success');
         
         // Step 4: Update database
-        addLogEntry('Đang cập nhật database...', 'info');
+        addLogEntry('Updating database...', 'info');
         await updateDatabase();
-        addLogEntry('✓ Cập nhật database thành công', 'success');
+        addLogEntry('✓ Database updated successfully', 'success');
         
         // Complete
         updateStepStatus(3, 'completed');
         updateStepStatus(4, 'completed');
         
-        addLogEntry('🎉 Hoàn tất! Tất cả sinh viên đã được thêm vào hệ thống.', 'success');
+        addLogEntry('🎉 Complete! All students have been added to the system.', 'success');
         
         // Show success message
         setTimeout(() => {
-            if (confirm('Thêm sinh viên thành công! Bạn có muốn quay lại dashboard không?')) {
+            if (confirm('Students added successfully! Do you want to return to dashboard?')) {
                 window.location.href = 'dashboard.html';
             }
         }, 2000);
         
     } catch (error) {
-        addLogEntry(`❌ Lỗi: ${error.message}`, 'error');
+        addLogEntry(`❌ Error: ${error.message}`, 'error');
         updateStepStatus(3, 'error');
         
         // Re-enable process button
         document.getElementById('process-btn').disabled = false;
-        document.getElementById('process-btn').innerHTML = '<i class="fas fa-cogs mr-2"></i>Xử Lý Lại';
+        document.getElementById('process-btn').innerHTML = '<i class="fas fa-cogs mr-2"></i>Retry Processing';
     }
 }
 
@@ -248,7 +248,7 @@ async function uploadExcelFile() {
     
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Upload file Excel thất bại');
+        throw new Error(error.detail || 'Excel file upload failed');
     }
     
     return await response.json();
@@ -281,7 +281,7 @@ async function uploadImagesFolder() {
     
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Upload folder ảnh thất bại');
+        throw new Error(error.detail || 'Image folder upload failed');
     }
     
     return await response.json();
@@ -294,7 +294,7 @@ async function processData() {
     
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Xử lý dữ liệu thất bại');
+        throw new Error(error.detail || 'Data processing failed');
     }
     
     return await response.json();
@@ -307,14 +307,14 @@ async function updateDatabase() {
     
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'Cập nhật database thất bại');
+        throw new Error(error.detail || 'Database update failed');
     }
     
     return await response.json();
 }
 
 function logout() {
-    if (confirm('Bạn có chắc muốn đăng xuất?')) {
+    if (confirm('Are you sure you want to logout?')) {
         window.location.href = 'login.html';
     }
 }

@@ -40,7 +40,7 @@ def process_face_data():
         point_id = 1
 
         if not os.path.exists(images_path):
-            print(f"❌ Không tìm thấy thư mục ảnh: {images_path}")
+            print(f"❌ Image folder not found: {images_path}")
             return False
 
         # Loop through subfolders (person names)
@@ -48,7 +48,7 @@ def process_face_data():
             person_path = os.path.join(images_path, person_name)
             
             if os.path.isdir(person_path):
-                print(f"📸 Đang xử lý: {person_name}")
+                print(f"📸 Processing: {person_name}")
                 
                 processed_images = 0
                 for image_file in os.listdir(person_path):
@@ -59,7 +59,7 @@ def process_face_data():
                             # Load image
                             img = cv2.imread(image_path)
                             if img is None:
-                                print(f"⚠️ Không thể đọc ảnh: {image_path}")
+                                print(f"⚠️ Unable to read image: {image_path}")
                                 continue
                                 
                             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -84,21 +84,21 @@ def process_face_data():
                                     )]
                                 )
                                 
-                                print(f"✅ Đã thêm: {image_file}")
+                                print(f"✅ Added: {image_file}")
                                 processed_images += 1
                                 point_id += 1
                             else:
-                                print(f"⚠️ Không tìm thấy khuôn mặt trong: {image_file}")
+                                print(f"⚠️ No face found in: {image_file}")
                         except Exception as e:
-                            print(f"❌ Lỗi xử lý ảnh {image_file}: {str(e)}")
+                            print(f"❌ Error processing image {image_file}: {str(e)}")
                 
-                print(f"📊 Đã xử lý {processed_images} ảnh cho {person_name}")
+                print(f"📊 Processed {processed_images} images for {person_name}")
 
-        print("🎉 Hoàn tất xử lý dữ liệu!")
+        print("🎉 Data processing completed!")
         return True
         
     except Exception as e:
-        print(f"❌ Lỗi xử lý dữ liệu: {str(e)}")
+        print(f"❌ Error processing data: {str(e)}")
         return False
 
 if __name__ == "__main__":

@@ -34,11 +34,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`✅ Loaded ${result.total} attendance records`);
             } else {
                 console.error('Failed to load attendance data');
-                showError('Không thể tải dữ liệu điểm danh');
+                showError('Unable to load attendance data');
             }
         } catch (error) {
             console.error('Error loading attendance data:', error);
-            showError('Lỗi kết nối khi tải dữ liệu');
+            showError('Connection error while loading data');
         } finally {
             hideLoading();
         }
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         socket.onopen = function(event) {
             console.log('✅ WebSocket connected');
-            showNotification('Kết nối real-time thành công', 'success');
+            showNotification('Real-time connection successful', 'success');
         };
         
         socket.onmessage = function(event) {
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateTable();
                 
                 // Show notification
-                showNotification(`🎉 ${newAttendance.name} (${newAttendance.student_id}) đã điểm danh thành công!`, 'success');
+                showNotification(`🎉 ${newAttendance.name} (${newAttendance.student_id}) has successfully checked in!`, 'success');
                 
                 // Play notification sound (optional)
                 playNotificationSound();
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         socket.onclose = function(event) {
             console.log('❌ WebSocket disconnected');
-            showNotification('Mất kết nối real-time. Đang thử kết nối lại...', 'warning');
+            showNotification('Real-time connection lost. Attempting to reconnect...', 'warning');
             
             // Reconnect after 3 seconds
             setTimeout(connectWebSocket, 3000);
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         socket.onerror = function(error) {
             console.error('WebSocket error:', error);
-            showNotification('Lỗi kết nối real-time', 'error');
+            showNotification('Real-time connection error', 'error');
         };
     }
     
@@ -101,8 +101,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <tr id="noDataRow">
                     <td colspan="6" class="px-6 py-8 text-center text-gray-500">
                         <i class="fas fa-clock text-4xl mb-4"></i>
-                        <p class="text-lg">Chưa có sinh viên nào điểm danh hôm nay</p>
-                        <p class="text-sm">Dữ liệu sẽ tự động cập nhật khi có sinh viên điểm danh</p>
+                        <p class="text-lg">No students have attended today</p>
+                        <p class="text-sm">Data will automatically update when students attend</p>
                     </td>
                 </tr>
             `;
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function formatDateTime(dateTimeString) {
         try {
             const date = new Date(dateTimeString);
-            return date.toLocaleString('vi-VN', {
+            return date.toLocaleString('en-US', {
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit',
