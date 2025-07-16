@@ -110,37 +110,55 @@ python api_main.py
 python main.py
 ```
 
-### Adding Students
+### 👨‍🎓 Adding Students
 
-1. **Access the Web Interface**: Open http://localhost:8000 in your browser
-<img src="assets/login.png" width="1024"/> 
-2. **Login**: Use default credentials You can find or change the default accounts in the [database.py](src\database.py)
-<img src="assets/username.png" width="1024"/> 
-3. **Navigate to Add Students**: Click "Add Students" in the dashboard
-4. **Upload Excel File**: 
-   - Download the sample Excel template
-   - Fill in student information (student_id, name, class, major)
-   - Upload the completed Excel file
-<img src="assets/excel.png" width="1024"/> 
-5. **Upload Images**: 
-   - Create folders named with student IDs
-   - Add student photos to respective folders
-   - Upload the entire images folder
-<img src="assets/avatar.png" width="1024"/> 
-⚠️ You must name each folder containing student photos using the `student’s ID`, which must match the `student_id` column in the `Excel file`. Otherwise, the system will not function correctly.
-6. **Process Data**: Click "Process Data" to generate face embeddings
-7. **Update Database**: Click "Update Database" to save student records
+1. **Access the Web Interface**  
+   Open [http://localhost:8000](http://localhost:8000) in your browser  
+   <img src="assets/login.png" width="1024"/>
+
+2. **Login**  
+   Use default credentials. You can find or change the default accounts in [`database.py`](src/database.py)  
+   <img src="assets/username.png" width="1024"/>
+
+3. **Navigate to Add Students**  
+   Click "Add Students" in the dashboard
+
+4. **Upload Excel File**  
+   - Download the sample Excel template  
+   - Fill in student information (`student_id`, `name`, `class`, `major`)  
+   - Upload the completed Excel file  
+   <img src="assets/excel.png" width="1024"/>
+
+5. **Upload Images**  
+   - Create folders named with student IDs  
+   - Add student photos to respective folders  
+   - Upload the entire images folder  
+   <img src="assets/avatar.png" width="1024"/>
+
+   ⚠️ **Important:** You must name each folder containing student photos using the `student’s ID`, which must match the `student_id` column in the Excel file. Otherwise, the system will not function correctly.
+
+6. **Process Data**  
+   Click "Process Data" to generate face embeddings
 
 
 
-### Taking Attendance
+### 🎯 Taking Attendance
 
-1. **Start Desktop Application**: Run `python main.py`
-<img src="assets/main.png" width="1024"/> 
-2. **Camera Setup**: Ensure webcam is connected and working
-3. **Face Recognition**: Students stand in front of the camera
-4. **Automatic Logging**: System automatically recognizes and logs attendance
-5. **Real-time Updates**: Dashboard shows real-time attendance updates
+1. **Start Desktop Application**  
+   Run `python main.py`  
+   <img src="assets/main.png" width="1024"/>
+
+2. **Camera Setup**  
+   Ensure webcam is connected and working
+
+3. **Face Recognition**  
+   Students stand in front of the camera
+
+4. **Automatic Logging**  
+   System automatically recognizes and logs attendance
+
+5. **Real-time Updates**  
+   Dashboard shows real-time attendance updates
 
 ## 🔗 API Endpoints
 
