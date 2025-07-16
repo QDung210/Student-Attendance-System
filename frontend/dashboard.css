@@ -1,0 +1,342 @@
+/* Dashboard CSS */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    font-size: 16px;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    background: linear-gradient(135deg, #0369a1, #0284c7);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.sidebar-item {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.sidebar-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.sidebar-item.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-item:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    white-space: nowrap;
+    z-index: 1001;
+}
+
+/* Main Content */
+.main-content {
+    background-color: #f8fafc;
+    min-height: 100vh;
+}
+
+.header h1 {
+    background: linear-gradient(135deg, #0369a1, #0284c7);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.header p {
+    color: #64748b;
+    font-size: 1.125rem;
+}
+
+/* Table Styles */
+.table-container {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.table-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-container thead {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+}
+
+.table-container th {
+    padding: 1.5rem;
+    text-align: left;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #334155;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+/* Center align image column headers */
+.table-container th:nth-child(2), 
+.table-container th:nth-child(3) { 
+    text-align: center;
+    font-size: 1rem;
+}
+
+.table-container tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table-container tbody tr:hover {
+    background-color: #f8fafc;
+    transform: translateX(4px);
+}
+
+.table-container td {
+    padding: 2rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 1.125rem;
+    color: #475569;
+    vertical-align: middle;
+}
+
+/* Specific column alignments */
+.table-container td:nth-child(1) { /* Index column */
+    text-align: center;
+    vertical-align: middle;
+    font-size: 1.5rem;
+}
+
+.table-container td:nth-child(4),
+.table-container td:nth-child(5),
+.table-container td:nth-child(6) { /* Name, ID, Time columns */
+    text-align: left;
+    vertical-align: middle;
+    font-size: 1.5rem;
+}
+
+/* Header alignments */
+.table-container th:nth-child(1) { /* Index header */
+    text-align: center;
+}
+
+/* Image container styling */
+.table-container td:nth-child(2),
+.table-container td:nth-child(3) {
+    text-align: center;
+    vertical-align: middle;
+    padding: 2rem 1rem;
+}
+
+/* Ensure images are centered within their cells */
+.table-container .attendance-image {
+    display: block;
+    margin: 0 auto;
+}
+
+/* Legacy image styles - kept for backward compatibility */
+.table-container img:not(.attendance-image) {
+    width: 120px;
+    height: 160px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.table-container img:not(.attendance-image):hover {
+    transform: scale(1.05);
+    border-color: #0284c7;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+/* Attendance Image Styles */
+.attendance-image {
+    width: 120px;
+    height: 160px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.attendance-image:hover {
+    transform: scale(1.05);
+    border-color: #0284c7;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+/* Placeholder for missing images */
+.table-container .w-16.h-16 {
+    width: 6rem;
+    height: 4.5rem;
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    transition: all 0.3s ease;
+}
+
+.table-container .w-16.h-16:hover {
+    transform: scale(1.05);
+    border-color: #0284c7;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+/* Placeholder styling for missing images */
+.table-container .image-placeholder {
+    width: 120px;
+    height: 160px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    border: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    transition: all 0.3s ease;
+}
+
+.table-container .image-placeholder:hover {
+    transform: scale(1.05);
+    border-color: #0284c7;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 1rem;
+        z-index: 1000;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .table-container {
+        overflow-x: auto;
+    }
+    
+    .table-container th,
+    .table-container td {
+        padding: 1rem;
+        font-size: 1rem;
+    }
+    
+    .table-container img,
+    .table-container .w-16.h-16 {
+        width: 4.5rem;
+        height: 3.5rem;
+    }
+    
+    .attendance-image {
+        width: 90px;
+        height: 120px;
+    }
+    
+    .table-container .image-placeholder {
+        width: 90px;
+        height: 120px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .table-container th,
+    .table-container td {
+        padding: 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .table-container img,
+    .table-container .w-16.h-16 {
+        width: 3.5rem;
+        height: 2.5rem;
+    }
+    
+    .attendance-image {
+        width: 70px;
+        height: 90px;
+    }
+    
+    .table-container .image-placeholder {
+        width: 70px;
+        height: 90px;
+    }
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.table-container {
+    animation: fadeIn 0.6s ease-out;
+}
+
+.header {
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* Tooltip */
+.tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    white-space: nowrap;
+    z-index: 1001;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}

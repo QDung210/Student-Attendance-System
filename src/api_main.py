@@ -1,5 +1,7 @@
-from fastapi import FastAPI, WebSocket, HTTPException, Form
+from fastapi import FastAPI, WebSocket, HTTPException, Form, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 import sqlite3
 import hashlib
 import base64
@@ -8,8 +10,68 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any
 import asyncio
 import uvicorn
+import os
+import shutil
+import subprocess
+import pandas as pd
+from pathlib import Path
 
 app = FastAPI(title="Face Recognition Attendance API")
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="../frontend"), name="static")
+
+# Serve frontend files
+@app.get("/")
+async def read_root():
+    return FileResponse("../frontend/login.html")
+
+@app.get("/dashboard.html")
+async def dashboard():
+    return FileResponse("../frontend/dashboard.html")
+
+@app.get("/add-students.html")
+async def add_students():
+    return FileResponse("../frontend/add-students.html")
+
+@app.get("/dashboard.js")
+async def dashboard_js():
+    return FileResponse("../frontend/dashboard.js")
+
+@app.get("/add-students.js")
+async def add_students_js():
+    return FileResponse("../frontend/add-students.js")
+
+@app.get("/dashboard.css")
+async def dashboard_css():
+    return FileResponse("../frontend/dashboard.css")
+
+# Serve CSS files
+@app.get("/globals.css")
+async def globals_css():
+    return FileResponse("../frontend/globals.css")
+
+@app.get("/styleguide.css")
+async def styleguide_css():
+    return FileResponse("../frontend/styleguide.css")
+
+@app.get("/style.css")
+async def style_css():
+    return FileResponse("../frontend/style.css")
+
+# Serve JS files
+@app.get("/script.js")
+async def script_js():
+    return FileResponse("../frontend/script.js")
+
+# Serve image files
+@app.get("/logo.png")
+async def logo_png():
+    return FileResponse("../frontend/logo.png")
+
+@app.get("/icon.png")
+async def icon_png():
+    return FileResponse("../frontend/icon.png")
 
 # CORS middleware
 app.add_middleware(
@@ -98,10 +160,10 @@ async def login(username: str = Form(...), password: str = Form(...)):
     cursor = conn.cursor()
     
     try:
-        # Kiểm tra thông tin đăng nhập
+        # Kiểm tra thông tin đăng nhập - có thể là username hoặc email
         cursor.execute(
-            "SELECT username, password_hash, full_name FROM teacher WHERE username = ?",
-            (username,)
+            "SELECT username, password_hash, full_name FROM teacher WHERE username = ? OR username LIKE ?",
+            (username, f"%{username}%")
         )
         teacher = cursor.fetchone()
         
@@ -114,11 +176,7 @@ async def login(username: str = Form(...), password: str = Form(...)):
         # Tạo token đơn giản (trong thực tế nên dùng JWT)
         token = base64.b64encode(f"{username}:{datetime.now().isoformat()}".encode()).decode()
         
-        return create_login_response(
-            True,
-            f"Đăng nhập thành công! Xin chào {teacher['full_name']}",
-            token
-        )
+        return create_login_response(True, f"Đăng nhập thành công! Xin chào {teacher['full_name']}", token)
         
     except Exception as e:
         return create_login_response(False, f"Lỗi: {str(e)}")
@@ -224,19 +282,135 @@ async def notify_attendance(student_id: str, attendance_time: str):
     finally:
         conn.close()
 
-@app.get("/")
-async def root():
-    """API test"""
-    return {
-        "message": "Face Recognition Attendance API",
-        "version": "1.0.0",
-        "endpoints": {
-            "login": "POST /login",
-            "today_checkins": "GET /today-checkins", 
-            "websocket": "WS /ws/attendance",
-            "notify": "POST /notify-attendance"
+# Upload Excel file endpoint
+@app.post("/api/upload-excel")
+async def upload_excel(file: UploadFile = File(...)):
+    try:
+        # Validate file type
+        if not file.filename.endswith(('.xlsx', '.xls')):
+            raise HTTPException(status_code=400, detail="Chỉ chấp nhận file Excel (.xlsx, .xls)")
+        
+        # Save uploaded file
+        excel_path = "students.xlsx"
+        with open(excel_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        # Validate Excel content
+        try:
+            df = pd.read_excel(excel_path)
+            required_columns = ['student_id', 'name', 'class', 'major']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            
+            if missing_columns:
+                raise HTTPException(status_code=400, detail=f"File Excel thiếu các cột: {', '.join(missing_columns)}")
+            
+            student_count = len(df)
+            
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Không thể đọc file Excel: {str(e)}")
+        
+        return {
+            "success": True, 
+            "message": "Upload file Excel thành công",
+            "student_count": student_count,
+            "file_path": excel_path
         }
-    }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi upload file Excel: {str(e)}")
+
+# Upload images folder endpoint
+@app.post("/api/upload-images")
+async def upload_images(files: List[UploadFile] = File(...)):
+    try:
+        # Create avatars directory if not exists
+        avatars_dir = Path("../avatars")
+        avatars_dir.mkdir(exist_ok=True)
+        
+        uploaded_students = set()
+        total_files = 0
+        
+        for file in files:
+            if file.filename and file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                # Extract student ID from filename pattern
+                # Expected pattern: images_StudentID_index_originalname
+                filename_parts = file.filename.split('_')
+                if len(filename_parts) >= 3 and filename_parts[0] == 'images':
+                    student_id = filename_parts[1]
+                    original_filename = '_'.join(filename_parts[3:])  # Get original filename
+                    
+                    # Create student folder
+                    student_dir = avatars_dir / student_id
+                    student_dir.mkdir(exist_ok=True)
+                    
+                    # Save image with original filename
+                    image_path = student_dir / original_filename
+                    with open(image_path, "wb") as buffer:
+                        shutil.copyfileobj(file.file, buffer)
+                    
+                    uploaded_students.add(student_id)
+                    total_files += 1
+        
+        return {
+            "success": True,
+            "message": "Upload folder ảnh thành công",
+            "students_count": len(uploaded_students),
+            "total_files": total_files,
+            "uploaded_students": list(uploaded_students)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi upload folder ảnh: {str(e)}")
+
+# Process data endpoint
+@app.post("/api/process-data")
+async def process_data():
+    try:
+        # Import and run the data processing function
+        from data import process_face_data
+        
+        success = process_face_data()
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="Xử lý dữ liệu thất bại")
+        
+        return {
+            "success": True,
+            "message": "Xử lý dữ liệu thành công"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi xử lý dữ liệu: {str(e)}")
+
+# Update database endpoint
+@app.post("/api/update-database")
+async def update_database():
+    try:
+        # Import and run the database update function
+        from database import update_database as update_db
+        
+        success = update_db()
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="Cập nhật database thất bại")
+        
+        return {
+            "success": True,
+            "message": "Cập nhật database thành công"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi cập nhật database: {str(e)}")
+
+# Download sample Excel file
+@app.get("/sample-excel")
+async def download_sample_excel():
+    """Download file Excel mẫu"""
+    sample_file = "students_sample.xlsx"
+    if os.path.exists(sample_file):
+        return FileResponse(sample_file, filename="students_sample.xlsx", media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    else:
+        raise HTTPException(status_code=404, detail="File mẫu không tồn tại")
 
 if __name__ == "__main__":
     print("🚀 Starting Face Recognition Attendance API...")
@@ -245,6 +419,11 @@ if __name__ == "__main__":
     print("   - GET /today-checkins - Danh sách điểm danh hôm nay")
     print("   - WS /ws/attendance - WebSocket real-time")
     print("   - POST /notify-attendance - Thông báo điểm danh mới")
+    print("   - POST /api/upload-excel - Upload file Excel sinh viên")
+    print("   - POST /api/upload-images - Upload folder ảnh sinh viên")
+    print("   - POST /api/process-data - Xử lý dữ liệu từ file Excel và ảnh")
+    print("   - POST /api/update-database - Cập nhật database từ dữ liệu đã xử lý")
+    print("   - GET /sample-excel - Tải file Excel mẫu")
     print("🌐 Server running on: http://localhost:8000")
     print("📖 API Docs: http://localhost:8000/docs")
     

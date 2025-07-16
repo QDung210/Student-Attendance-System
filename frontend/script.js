@@ -49,6 +49,43 @@ document.addEventListener('DOMContentLoaded', function() {
             isValid = false;
         }
         
+        if (!isValid) return;
+        
+        // Show loading state
+        loginButton.disabled = true;
+        loginButton.querySelector('.login-now').textContent = 'Logging in...';
+        
+        // Send login request to API
+        fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Store auth info
+                localStorage.setItem('authToken', data.token || 'demo-token-' + Date.now());
+                localStorage.setItem('userEmail', email);
+                
+                // Redirect to dashboard
+                window.location.href = 'dashboard.html';
+            } else {
+                showError('password', data.message || 'Login failed');
+            }
+        })
+        .catch(error => {
+            console.error('Login error:', error);
+            showError('password', 'Network error. Please try again.');
+        })
+        .finally(() => {
+            // Reset button state
+            loginButton.disabled = false;
+            loginButton.querySelector('.login-now').textContent = 'Login';
+        });
+        
         if (!isValid) {
             shakeForm();
             return;
@@ -61,11 +98,13 @@ document.addEventListener('DOMContentLoaded', function() {
             // Login successful
             showSuccess('Login successful!');
             
+            // Store login info
+            localStorage.setItem('userToken', 'demo-token-' + Date.now());
+            localStorage.setItem('userEmail', email);
+            
             // Redirect after delay
             setTimeout(() => {
-                alert('Redirecting to Face Recognition System...');
-                // Here you would typically redirect to your main application
-                // window.location.href = 'main-app.html';
+                window.location.href = 'dashboard.html';
             }, 1500);
             
         } else {

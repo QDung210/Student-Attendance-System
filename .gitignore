@@ -1,1 +1,2 @@
-images/dung/*
+__pycache__/
+.vscode/

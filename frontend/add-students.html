@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm Sinh Viên - Face Recognition System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .upload-area {
+            border: 2px dashed #0284c7;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+        }
+        
+        .upload-area:hover {
+            background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+            border-color: #0369a1;
+        }
+        
+        .upload-area.dragover {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border-color: #2563eb;
+        }
+        
+        .file-info {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1px solid #0284c7;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0369a1, #0284c7);
+            transition: width 0.3s ease;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+        
+        .step.active {
+            color: #0284c7;
+            font-weight: 600;
+        }
+        
+        .step.completed {
+            color: #10b981;
+        }
+        
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .step.active .step-circle {
+            border-color: #0284c7;
+            background: #0284c7;
+            color: white;
+        }
+        
+        .step.completed .step-circle {
+            border-color: #10b981;
+            background: #10b981;
+            color: white;
+        }
+        
+        .log-container {
+            background: #1f2937;
+            color: #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+        }
+        
+        .log-entry.success {
+            color: #10b981;
+        }
+        
+        .log-entry.error {
+            color: #ef4444;
+        }
+        
+        .log-entry.info {
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-16 sidebar flex flex-col items-center py-6 space-y-6">
+        <div class="sidebar-item" data-tooltip="Dashboard" onclick="window.location.href='dashboard.html'">
+            <i class="fas fa-home text-white text-xl"></i>
+        </div>
+        <div class="sidebar-item active" data-tooltip="Thêm Sinh Viên">
+            <i class="fas fa-user-plus text-white text-xl"></i>
+        </div>
+        <div class="sidebar-item" data-tooltip="Báo Cáo" onclick="window.location.href='#'">
+            <i class="fas fa-chart-bar text-white text-xl"></i>
+        </div>
+        <div class="sidebar-item" data-tooltip="Cài Đặt" onclick="window.location.href='#'">
+            <i class="fas fa-cog text-white text-xl"></i>
+        </div>
+        <div class="sidebar-item mt-auto" data-tooltip="Đăng Xuất" onclick="logout()">
+            <i class="fas fa-sign-out-alt text-white text-xl"></i>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content ml-16 p-8">
+        <div class="header mb-8">
+            <h1 class="text-4xl font-bold mb-2">Thêm Sinh Viên</h1>
+            <p class="text-gray-600">Upload danh sách sinh viên và ảnh đại diện</p>
+            
+            <!-- Instructions -->
+            <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 class="font-semibold text-blue-800 mb-2">📋 Hướng dẫn sử dụng:</h3>
+                <ul class="text-sm text-blue-700 space-y-1">
+                    <li>• <strong>Bước 1:</strong> Tải file Excel mẫu và điền thông tin sinh viên</li>
+                    <li>• <strong>Bước 2:</strong> Chuẩn bị folder ảnh theo cấu trúc: <code>folder/student_id/images.jpg</code></li>
+                    <li>• <strong>Bước 3:</strong> Upload cả file Excel và folder ảnh</li>
+                    <li>• <strong>Bước 4:</strong> Nhấn "Xử Lý Dữ Liệu" để hoàn tất</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active" id="step1">
+                <div class="step-circle">1</div>
+                <span>Upload File Excel</span>
+            </div>
+            <div class="step" id="step2">
+                <div class="step-circle">2</div>
+                <span>Upload Folder Ảnh</span>
+            </div>
+            <div class="step" id="step3">
+                <div class="step-circle">3</div>
+                <span>Xử Lý Dữ Liệu</span>
+            </div>
+            <div class="step" id="step4">
+                <div class="step-circle">4</div>
+                <span>Hoàn Tất</span>
+            </div>
+        </div>
+
+        <!-- Upload Forms -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <!-- Excel Upload -->
+            <div class="mb-8" id="excel-section">
+                <h3 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-file-excel text-green-600 mr-2"></i>
+                    1. Upload File Excel Danh Sách Sinh Viên
+                </h3>
+                <div class="mb-4">
+                    <a href="/sample-excel" download="students_sample.xlsx" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>
+                        Tải file Excel mẫu
+                    </a>
+                    <p class="text-sm text-gray-600 mt-2">Tải file mẫu và điền thông tin sinh viên theo cấu trúc có sẵn</p>
+                </div>
+                <div class="upload-area" id="excel-upload-area">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-blue-500 mb-4"></i>
+                    <p class="text-lg mb-2">Kéo thả file Excel vào đây hoặc click để chọn</p>
+                    <p class="text-sm text-gray-500">Định dạng: .xlsx, .xls</p>
+                    <input type="file" id="excel-file" accept=".xlsx,.xls" class="hidden">
+                </div>
+                <div id="excel-info" class="hidden file-info">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-file-excel text-green-600 mr-2"></i>
+                            <span id="excel-name"></span>
+                        </div>
+                        <button onclick="removeExcelFile()" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Images Upload -->
+            <div class="mb-8" id="images-section">
+                <h3 class="text-xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-images text-purple-600 mr-2"></i>
+                    2. Upload Folder Ảnh Sinh Viên
+                </h3>
+                <div class="mb-4 bg-purple-50 border border-purple-200 rounded-lg p-3">
+                    <p class="text-sm text-purple-700 mb-2"><strong>Cấu trúc folder:</strong></p>
+                    <div class="font-mono text-xs text-purple-600 bg-white p-2 rounded border">
+                        📁 avatars/<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;📁 HE123456/<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📄 image1.jpg<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📄 image2.png<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;📁 HE123457/<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;📄 photo.jpg<br>
+                    </div>
+                </div>
+                <div class="upload-area" id="images-upload-area">
+                    <i class="fas fa-folder-open text-4xl text-purple-500 mb-4"></i>
+                    <p class="text-lg mb-2">Chọn folder chứa ảnh sinh viên</p>
+                    <p class="text-sm text-gray-500">Mỗi sinh viên có một folder riêng theo student_id</p>
+                    <input type="file" id="images-folder" webkitdirectory multiple class="hidden">
+                </div>
+                <div id="images-info" class="hidden file-info">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-folder text-purple-600 mr-2"></i>
+                            <span id="images-count"></span>
+                        </div>
+                        <button onclick="removeImagesFolder()" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="mt-2">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="images-progress" style="width: 0%"></div>
+                        </div>
+                        <div class="text-sm text-gray-600 mt-1" id="images-progress-text">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Process Button -->
+            <div class="text-center">
+                <button onclick="processStudents()" id="process-btn" class="bg-gradient-to-r from-sky-600 to-sky-700 text-white px-8 py-3 rounded-lg font-semibold text-lg hover:from-sky-700 hover:to-sky-800 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i class="fas fa-cogs mr-2"></i>
+                    Xử Lý Dữ Liệu
+                </button>
+            </div>
+        </div>
+
+        <!-- Processing Log -->
+        <div class="bg-white rounded-lg shadow-lg p-6" id="log-section" style="display: none;">
+            <h3 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-terminal text-gray-600 mr-2"></i>
+                Quá Trình Xử Lý
+            </h3>
+            <div class="log-container" id="log-container">
+                <!-- Log entries will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="add-students.js"></script>
+</body>
+</html>
